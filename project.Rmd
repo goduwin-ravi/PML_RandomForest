@@ -1,0 +1,53 @@
+## Practical Machine Learning Project (Part-A): Writeup
+
+### Problem: 
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+### Preliminary Data Exploration and Cleansing:
+
+  1.  Convert excel division errors `#DIV/0!` and empty strings to `NA`.
+  2.  Remove features that contained NA values.
+  3.  Drop columns containing irrelevant metadata.
+      The following columns were removed:
+        * row_index
+        * user_name
+        * raw_timestamp_part_1
+        * raw_timestamp_part_2
+        * cvtd_timestamp
+        * new_window
+        * num_window
+  
+The code to preprocess data is located in "project.R" file.
+
+### Partitioning data into test (40%) and train (60%) based on the 'classe' variable for cross validation:
+
+```{r Cleanse, echo=TRUE}
+source("project.R")
+df    <- createDataPartition(training$classe, p=.60, list=FALSE)
+train <- training[df[,1]]
+test  <- training[-df[,1]]
+```
+
+### Developing the Random Forest Prediction Model
+
+```{r Fit, echo=TRUE}
+fit1 <- train(y=as.factor(train$classe), x=train[,!"classe",with=F], 
+              tuneGrid=data.frame(mtry=3), trControl=trainControl(method="none"), method="rf")
+```
+
+```{r Kappa, echo=TRUE}
+x <- confusionMatrix(predict(fit1, newdata=transform(test)), factor(test$classe))
+kappa <- x$overall["Kappa"]
+kappa
+```
+
+#### Plot Observations
+
+```{r Plot, echo=TRUE}
+print(plot(varImp(fit1, scale = FALSE)))
+```
+
+### Conclusion
+
+The random forest algorithm clearly predicts activities from accelerometers measurements.
+
